@@ -1,0 +1,51 @@
+{
+  "name": "fakenewzz",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "test": "tsx --test tests/ingestion.test.ts tests/search.test.ts tests/evaluation.test.ts tests/omission.test.ts tests/scoring.test.ts tests/verification.test.ts tests/verdict-explanation.test.ts tests/accuracy-regression.test.ts tests/phase8-benchmark.test.ts tests/statement-attribution.test.ts tests/cross-source-comparison.test.ts tests/assertion-layers.test.ts tests/trace.test.ts tests/evidence-retrieval.test.ts tests/cross-source-engine.test.ts tests/scoring-v2.test.ts tests/ui-results.test.ts tests/consensus-consistency.test.ts tests/hedged-speculation.test.ts tests/unable-to-verify-fixes.test.ts tests/unreadable-fallback.test.ts tests/text-input.test.ts tests/backdrop.test.ts tests/source-link.test.ts tests/evidence-trust-rules.test.ts tests/conclusion-summary.test.ts tests/tone.test.ts tests/hardening.test.ts",
+    "benchmark": "tsx scripts/runBenchmark.ts",
+    "benchmark:quick": "tsx scripts/runBenchmark.ts --quick",
+    "trace:summarize": "tsx scripts/summarizeTrace.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.79",
+    "@ai-sdk/google": "^4.0.95",
+    "@mendable/firecrawl-js": "^4.46.0",
+    "@radix-ui/react-accordion": "^1.3.1",
+    "@radix-ui/react-dialog": "^1.3.1",
+    "@radix-ui/react-progress": "^1.2.1",
+    "@radix-ui/react-tabs": "^1.2.1",
+    "@radix-ui/react-tooltip": "^1.4.1",
+    "@supabase/supabase-js": "^2.117.3",
+    "@tavily/core": "^0.7.14",
+    "@upstash/redis": "^1.39.0",
+    "ai": "^7.0.140",
+    "cheerio": "^1.2.0",
+    "clsx": "^2.1.1",
+    "exa-js": "^2.25.0",
+    "framer-motion": "^14.2.0",
+    "lucide-react": "^1.57.0",
+    "next": "16.4.5",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
+    "@tailwindcss/turbopack": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.15",
+    "typescript": "^5"
+  }
+}

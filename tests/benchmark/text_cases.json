@@ -1,0 +1,67 @@
+[
+  {
+    "id": "case-1",
+    "name": "1. Real confirmed event headline",
+    "category": "real_confirmed_event",
+    "input": "NASA James Webb Space Telescope captures deepest infrared image of early universe",
+    "expectedConclusions": ["True", "Mostly true"],
+    "description": "A headline about a real, widely confirmed event."
+  },
+  {
+    "id": "case-2",
+    "name": "2. Detail changed headline",
+    "category": "detail_changed",
+    "input": "NASA James Webb Space Telescope captures deepest infrared image of early universe in December 2028",
+    "expectedConclusions": ["False", "Partly true"],
+    "description": "The same headline with ONE detail changed (a future date December 2028)."
+  },
+  {
+    "id": "case-3",
+    "name": "3. Fabricated plausible event",
+    "category": "fabricated_plausible",
+    "input": "French government officially mandates nationwide permanent shutdown of all private swimming pools by August 2026",
+    "expectedConclusions": ["Can't verify", "False"],
+    "description": "A completely fabricated event that sounds plausible."
+  },
+  {
+    "id": "case-4",
+    "name": "4. Known viral hoax / debunked claim",
+    "category": "debunked_hoax",
+    "input": "UNESCO officially votes and declares the Indian national anthem Jana Gana Mana as the best national anthem in the world",
+    "expectedConclusions": ["False"],
+    "description": "A known viral hoax or debunked claim."
+  },
+  {
+    "id": "case-5",
+    "name": "5. Rumour with reporting but unconfirmed",
+    "category": "unconfirmed_rumour",
+    "input": "Apple in active confidential acquisition talks to buy Walt Disney Company for $200 billion",
+    "expectedConclusions": ["Unconfirmed"],
+    "description": "A rumour with credible reporting but no confirmation."
+  },
+  {
+    "id": "case-6",
+    "name": "6. Exaggerated / misleading framing",
+    "category": "exaggerated_misleading",
+    "input": "Entire national power grid collapsed and permanently disabled following scheduled routine maintenance in northern substation",
+    "expectedConclusions": ["Misleading"],
+    "description": "A true event framed in an exaggerated or misleading way."
+  },
+  {
+    "id": "case-7",
+    "name": "7. Very recent event with little coverage",
+    "category": "recent_little_coverage",
+    "input": "Minor 1.9 magnitude micro-tremor detected near small uninhabited bluff in eastern Greenland this morning",
+    "expectedConclusions": ["Can't verify", "Unconfirmed"],
+    "description": "A claim about a very recent event with little coverage."
+  },
+  {
+    "id": "case-8",
+    "name": "8. Mixed message (one true, one false)",
+    "category": "mixed_message",
+    "input": "India won the ICC Men's T20 World Cup title in Barbados against South Africa. Immediately following the match, ICC announced that professional cricket will be permanently banned worldwide.",
+    "expectedConclusions": ["Partly true"],
+    "description": "A short pasted multi-sentence message mixing one true and one false claim."
+  }
+]
+

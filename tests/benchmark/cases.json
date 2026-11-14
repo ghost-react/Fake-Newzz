@@ -1,0 +1,337 @@
+[
+  {
+    "id": "placeholder-genuine",
+    "category": "genuine",
+    "inputType": "url",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for genuine news article",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "placeholder-false",
+    "category": "false",
+    "inputType": "claim",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for fabricated or debunked claim",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "placeholder-breaking-news",
+    "category": "breaking_news",
+    "inputType": "headline",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for developing breaking news with evolving coverage",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "placeholder-genuine-quote",
+    "category": "genuine_quote",
+    "inputType": "text",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for genuine spoken quotation by public figure",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "placeholder-blocked-source",
+    "category": "blocked_source",
+    "inputType": "url",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for story behind paywall or anti-scraping gate",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "placeholder-short-text",
+    "category": "short_text",
+    "inputType": "text",
+    "input": "TODO",
+    "acceptableVerdicts": [],
+    "forbiddenVerdicts": [],
+    "scoreRange": null,
+    "notes": "Placeholder case for short social or headline assertion",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-07"
+  },
+  {
+    "id": "hedged-analysis-hardik-pandya",
+    "category": "breaking_news",
+    "inputType": "claim",
+    "input": "Hardik Pandya could potentially be traded to Punjab Kings ahead of IPL auction, reports suggest; Delhi Capitals also exploring options",
+    "acceptableVerdicts": [
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "misleading",
+      "false",
+      "mostly_false"
+    ],
+    "scoreRange": [
+      60,
+      95
+    ],
+    "notes": "Hedged analysis of IPL player trade rumours where possibilities are reported as scenarios; acceptable verdict is mostly_true with unconfirmed_reports status.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "rumour-stated-as-fact-hardik-pbks",
+    "category": "misleading",
+    "inputType": "headline",
+    "input": "Hardik Pandya joins Punjab Kings for IPL 2025",
+    "acceptableVerdicts": [
+      "misleading",
+      "mostly_false",
+      "false"
+    ],
+    "forbiddenVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "scoreRange": [
+      0,
+      59
+    ],
+    "notes": "Trade rumours or preliminary talks stated as a finalized fact ('joins PBKS'); framing mismatch requires misleading or refuted verdict.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "denied-rumour-franchise-trade",
+    "category": "conflicting_reports",
+    "inputType": "claim",
+    "input": "Reports claim Punjab Kings submitted formal trade offer for Hardik Pandya despite franchise CEO denial",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true",
+      "mixed"
+    ],
+    "forbiddenVerdicts": [
+      "verified_true",
+      "false"
+    ],
+    "scoreRange": [
+      40,
+      95
+    ],
+    "notes": "Franchise CEO denies formal offer while media outlets report speculation; treated as denial context rather than direct contradiction.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "confirmed-trade-official-announcement",
+    "category": "genuine",
+    "inputType": "headline",
+    "input": "BCCI approves official player trade ahead of IPL retention deadline",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "misleading",
+      "false",
+      "mostly_false"
+    ],
+    "scoreRange": [
+      80,
+      100
+    ],
+    "notes": "Official announcement corroborated by governing body; verified_true or mostly_true.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "developing-injury-report-bumrah",
+    "category": "breaking_news",
+    "inputType": "claim",
+    "input": "Jasprit Bumrah undergoes fitness assessment in NCA ahead of Test series, medical update awaited",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true",
+      "mixed"
+    ],
+    "forbiddenVerdicts": [
+      "misleading",
+      "false"
+    ],
+    "scoreRange": [
+      50,
+      100
+    ],
+    "notes": "Developing player fitness report awaiting final medical clearance; marked developing story.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "forecast-monsoon-arrival-imd",
+    "category": "genuine",
+    "inputType": "headline",
+    "input": "IMD forecasts monsoon arrival over Kerala by June 1",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "misleading",
+      "false"
+    ],
+    "scoreRange": [
+      75,
+      100
+    ],
+    "notes": "Official weather office projection stated as a forecast; verified_true or mostly_true.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-09"
+  },
+  {
+    "id": "blocked-site-genuine-story",
+    "category": "blocked_source",
+    "inputType": "claim",
+    "input": "Supreme Court issues notice to civil aviation ministry on airfare caps petition",
+    "acceptableVerdicts": [
+      "mostly_true",
+      "verified_true"
+    ],
+    "forbiddenVerdicts": [
+      "unverified",
+      "false",
+      "misleading"
+    ],
+    "scoreRange": [
+      70,
+      100
+    ],
+    "notes": "Blocked/unreadable original URL or article corroborated by independent reporting across outlets; returns mostly_true, never unverified.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "genuine-policy-decree-meloni-variation",
+    "category": "genuine",
+    "inputType": "claim",
+    "input": "Italian government approves Meloni youth decree targeting juvenile crime with penalties for parents and measures for youths aged 14-17",
+    "acceptableVerdicts": [
+      "mostly_true",
+      "verified_true"
+    ],
+    "forbiddenVerdicts": [
+      "unverified",
+      "misleading",
+      "false"
+    ],
+    "scoreRange": [
+      70,
+      100
+    ],
+    "notes": "Meloni decree approved by cabinet; minor detail variation across outlets (age 14-17 vs 16+, fines up to EUR 20,000 / INR 21 lakh) records detail_variation and passes core-event gate.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "related-but-different-event-maritime-decree",
+    "category": "conflicting_reports",
+    "inputType": "claim",
+    "input": "Cabinet approves September decree establishing revised maritime security measures",
+    "acceptableVerdicts": [
+      "mostly_true",
+      "verified_true"
+    ],
+    "forbiddenVerdicts": [
+      "unverified",
+      "false",
+      "misleading"
+    ],
+    "scoreRange": [
+      70,
+      100
+    ],
+    "notes": "September decree with July earlier draft bill in search results; tagged as related_background or different_event and creates no conflict.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "wire-story-syndicated-coverage",
+    "category": "syndicated",
+    "inputType": "claim",
+    "input": "ISRO successfully places EOS ocean satellite into intended orbit from Sriharikota",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "unverified",
+      "misleading",
+      "false"
+    ],
+    "scoreRange": [
+      70,
+      100
+    ],
+    "notes": "Wire story reported with minor text differences across syndicated outlets; grouped as syndicated cluster and verifies successfully.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "official-statement-government-and-press",
+    "category": "genuine",
+    "inputType": "claim",
+    "input": "Finance Ministry notifies customs duty exemption on specified green hydrogen equipment",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "unverified",
+      "false",
+      "misleading"
+    ],
+    "scoreRange": [
+      70,
+      100
+    ],
+    "notes": "Official gazette notification confirmed by 1 official source and 1 national news report; passes core-event gate.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "genuinely-false-currency-ban-claim",
+    "category": "false",
+    "inputType": "claim",
+    "input": "RBI announces complete demonetisation and invalidation of 500 rupee notes starting midnight",
+    "acceptableVerdicts": [
+      "false",
+      "mostly_false"
+    ],
+    "forbiddenVerdicts": [
+      "verified_true",
+      "mostly_true",
+      "unverified"
+    ],
+    "scoreRange": [
+      0,
+      35
+    ],
+    "notes": "Genuinely false claim directly contradicted and refuted by fact-checkers; returns negative verdict.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-10"
+  }
+]
+
