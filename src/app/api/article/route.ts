@@ -5,6 +5,8 @@ import { recoverHeadline } from "@/lib/ingestion/headlineRecovery";
 import { SerperProvider } from "@/lib/search/serper";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * POST /api/article
  * Ingests a news article URL via server-side Firecrawl, normalizes and strictly validates it.

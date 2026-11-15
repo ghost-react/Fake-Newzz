@@ -3,6 +3,8 @@ import { ClaimInput } from "@/schemas/evidence";
 import { decomposeStatementClaims } from "@/lib/verification/statementIntent";
 import { applyRouteGuard } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * Deterministically decomposes article text or headline into atomic factual claims.
  */

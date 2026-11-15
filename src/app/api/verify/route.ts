@@ -36,6 +36,8 @@ import { decomposeStatementClaims, detectStatementIntent } from "@/lib/verificat
 import { inferClaimCertainty } from "@/lib/verification/claimExtractor";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * Deterministically extracts atomic testable assertions from an ingested article.
  */

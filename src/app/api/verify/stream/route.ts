@@ -14,6 +14,8 @@ import { Article } from "@/schemas/article";
 import { Omission } from "@/schemas/omission";
 import { ComparisonReport } from "@/schemas/comparison";
 
+export const maxDuration = 300;
+
 function extractClaimsFromArticle(article: {
   title?: string;
   description?: string | null;

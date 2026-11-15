@@ -3,6 +3,8 @@ import { AnalyzeContextRequestSchema } from "@/schemas/omission";
 import { analyzeArticleContext } from "@/lib/verification/contextAnalysis";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * POST /api/context
  *

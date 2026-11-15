@@ -7,6 +7,8 @@ import { searchMultipleClaims } from "@/lib/search/searchClaims";
 import { SearchError, SerperProvider } from "@/lib/search/serper";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * POST /api/search
  * Server-side Multi-Source Evidence Retrieval using Serper.

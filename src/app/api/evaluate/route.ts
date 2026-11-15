@@ -3,6 +3,8 @@ import { EvaluateClaimsRequestSchema } from "@/schemas/evaluation";
 import { evaluateClaims } from "@/lib/verification/evaluateClaims";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
 
+export const maxDuration = 300;
+
 /**
  * POST /api/evaluate
  *
