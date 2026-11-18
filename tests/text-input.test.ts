@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { NextRequest } from "next/server";
 import { POST } from "../src/app/api/verify/route";
@@ -32,6 +32,20 @@ function makeEvidence(e: Partial<Evidence> & { id: string; claimId: string; url:
 }
 
 describe("Text Input & Non-URL Verification Test Suite", () => {
+  let prevFlag: string | undefined;
+
+  before(() => {
+    prevFlag = process.env.TEXT_INPUT_ENABLED;
+    process.env.TEXT_INPUT_ENABLED = "true";
+  });
+
+  after(() => {
+    if (prevFlag !== undefined) {
+      process.env.TEXT_INPUT_ENABLED = prevFlag;
+    } else {
+      delete process.env.TEXT_INPUT_ENABLED;
+    }
+  });
   // ─── 1. Inputs a-d reach pipeline as right type and are not rejected ──────────
   it("1. Inputs a-d reach the pipeline as the right type and are not rejected", () => {
     // a. Italian decree headline

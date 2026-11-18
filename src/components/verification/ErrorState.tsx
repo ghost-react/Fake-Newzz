@@ -50,8 +50,8 @@ const ERROR_CONFIGS: Record<
     iconColor: "text-amber-400",
     iconBg: "bg-amber-500/10 border-amber-500/25",
     border: "border-amber-500/30",
-    defaultMessage: "Please enter a valid news URL, headline, or claim to verify.",
-    tip: "Make sure the link includes http:// or https://, or simply paste the headline directly.",
+    defaultMessage: "FakeNewzz currently checks news article links. Paste a link to the article.",
+    tip: "Make sure the link points to a specific article URL (e.g. https://example.com/news/story-123).",
   },
   EXTRACTION_FAILED: {
     badge: "Article Unavailable",
@@ -61,7 +61,7 @@ const ERROR_CONFIGS: Record<
     iconBg: "bg-rose-500/10 border-rose-500/25",
     border: "border-rose-500/30",
     defaultMessage: "We couldn't read this article. The website may be blocking automated access.",
-    tip: "The publisher might require a subscription, or you can paste the headline or key claims directly into the box above.",
+    tip: "The publisher may block automated access or require a subscription. Try another link to the same story.",
   },
   UNSUPPORTED: {
     badge: "Format Check",
@@ -163,17 +163,6 @@ export function ErrorState({
           <strong className="text-[#A1A1AA] block mb-1">Suggestion:</strong>
           <span>{config.tip}</span>
         </div>
-
-        {/* If article was unreadable / extraction failed, provide search box right here to paste headline or text */}
-        {type === "EXTRACTION_FAILED" && onSearch && (
-          <div className="w-full pt-2">
-            <SearchBar
-              onSearch={onSearch}
-              placeholder="Paste a news link, headline or claim"
-              className="w-full"
-            />
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center justify-center gap-3 pt-2">

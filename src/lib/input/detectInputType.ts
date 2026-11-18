@@ -1,3 +1,5 @@
+import { isTextInputEnabled } from "../config/flags";
+
 /**
  * Universal Input Type Detection and Parsing Module
  * Shared across client and server.
@@ -35,25 +37,98 @@ export interface ParsedInput {
 }
 
 /**
- * Validates raw input against empty and size limits.
- * Emits specific messages per rule, never "enter a link".
+ * Detects if a URL is a non-article page (bare homepages, search pages).
+ */
+export function isNonArticleUrl(urlStr: string): boolean {
+  if (!urlStr || typeof urlStr !== "string") return false;
+  try {
+    const normalized = /^https?:\/\//i.test(urlStr.trim())
+      ? urlStr.trim()
+      : `https://${urlStr.trim()}`;
+    const parsed = new URL(normalized);
+    const pathname = parsed.pathname.replace(/\/+$/, "").toLowerCase();
+
+    // Bare homepages (no path or just /)
+    if (!pathname || pathname === "") {
+      return true;
+    }
+
+    // Search pages
+    if (
+      pathname === "/search" ||
+      pathname.startsWith("/search/") ||
+      pathname.includes("/search") ||
+      parsed.searchParams.has("q") ||
+      parsed.searchParams.has("query") ||
+      parsed.searchParams.has("s")
+    ) {
+      return true;
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Extracts the first valid article URL from input text (with or without http/https).
+ * If the input contains a URL plus other words, extracts the first URL and returns it normalized.
+ */
+export function extractArticleUrl(raw: string): string | null {
+  if (!raw || typeof raw !== "string") return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+
+  // 1. Look for explicit http:// or https:// URL anywhere in text
+  const schemeMatch = trimmed.match(/https?:\/\/[^\s<>"{}|\\^`]+/i);
+  if (schemeMatch && schemeMatch[0]) {
+    const cleaned = schemeMatch[0].replace(/[.,;:!?)\]}]+$/, "");
+    return cleaned;
+  }
+
+  // 2. Look for tokens that look like a domain with path or www. prefix
+  const tokens = trimmed.split(/\s+/);
+  for (const token of tokens) {
+    const cleaned = token.replace(/[.,;:!?)\]}]+$/, "").replace(/^[([{"']+/, "");
+    // Check if token looks like a domain + optional path (e.g. reuters.com/world/news or www.bbc.com)
+    if (/^(?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)+(?:\/[^\s]*)?$/i.test(cleaned)) {
+      const hostPart = cleaned.split("/")[0].toLowerCase();
+      // Ensure host contains at least one dot and has a valid TLD of at least 2 chars
+      const hostSegments = hostPart.split(".");
+      const tld = hostSegments[hostSegments.length - 1];
+      if (hostSegments.length >= 2 && tld.length >= 2 && /^[a-z]{2,}$/i.test(tld)) {
+        return /^https?:\/\//i.test(cleaned) ? cleaned : `https://${cleaned}`;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Validates raw input against empty, size limits, and URL-only requirements.
  */
 export function validateInput(raw: unknown): InputValidationResult {
+  const urlOnly = !isTextInputEnabled();
+  const emptyMsg = urlOnly
+    ? "FakeNewzz currently checks news article links. Paste a link to the article."
+    : "Please enter a news link, headline, claim, or text to verify.";
+
   if (typeof raw !== "string" || !raw.trim()) {
-    const msg = "Please enter a news link, headline, claim, or text to verify.";
     return {
       isValid: false,
       valid: false,
       sanitized: "",
-      error: msg,
+      error: emptyMsg,
       errorCode: "EMPTY_INPUT",
-      errorMessage: msg,
+      errorMessage: emptyMsg,
     };
   }
 
   const trimmed = raw.trim();
   if (trimmed.length > MAX_INPUT_CHARS) {
-    const msg = `Input exceeds the maximum allowed length of ${MAX_INPUT_CHARS.toLocaleString()} characters. Please provide a shorter excerpt or headline.`;
+    const msg = `Input exceeds the maximum allowed length of ${MAX_INPUT_CHARS.toLocaleString()} characters.`;
     return {
       isValid: false,
       valid: false,
@@ -61,6 +136,40 @@ export function validateInput(raw: unknown): InputValidationResult {
       error: msg,
       errorCode: "INPUT_TOO_LONG",
       errorMessage: msg,
+    };
+  }
+
+  // If text input is disabled (URL-only mode)
+  if (urlOnly) {
+    const extractedUrl = extractArticleUrl(trimmed);
+    if (!extractedUrl) {
+      const msg = "FakeNewzz currently checks news article links. Paste a link to the article.";
+      return {
+        isValid: false,
+        valid: false,
+        sanitized: trimmed,
+        error: msg,
+        errorCode: "INVALID_INPUT",
+        errorMessage: msg,
+      };
+    }
+
+    if (isNonArticleUrl(extractedUrl)) {
+      const msg = "Paste the link to a specific article.";
+      return {
+        isValid: false,
+        valid: false,
+        sanitized: extractedUrl,
+        error: msg,
+        errorCode: "INVALID_INPUT",
+        errorMessage: msg,
+      };
+    }
+
+    return {
+      isValid: true,
+      valid: true,
+      sanitized: extractedUrl,
     };
   }
 
@@ -155,6 +264,14 @@ export function detectInputType(raw: string): DetectedInputType {
   const trimmed = raw.trim();
   if (!trimmed) return "text";
 
+  // URL-only mode: only detect "url" if an article URL is found
+  if (!isTextInputEnabled()) {
+    if (extractArticleUrl(trimmed)) {
+      return "url";
+    }
+    return "text";
+  }
+
   // 1. URL: a single token that parses as a valid http(s) URL (no spaces!)
   // Anything with spaces and sentence content is NOT a url, even if it contains a link inside it.
   if (isSingleTokenUrl(trimmed)) {
@@ -197,6 +314,28 @@ export function parseAndAnalyzeInput(
   forcedType?: DetectedInputType
 ): ParsedInput {
   const trimmed = (raw || "").trim();
+
+  // In URL-only mode: extract URL and use only that URL
+  if (!isTextInputEnabled()) {
+    const extracted = extractArticleUrl(trimmed);
+    if (extracted) {
+      return {
+        raw: trimmed,
+        type: "url",
+        url: extracted,
+        targetUrl: extracted,
+        extractedUrl: extracted,
+        text: extracted,
+      };
+    }
+
+    return {
+      raw: trimmed,
+      type: "text",
+      text: trimmed,
+    };
+  }
+
   const detected = detectInputType(trimmed);
   const type = forcedType || detected;
 

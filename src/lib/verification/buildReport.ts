@@ -138,11 +138,21 @@ export async function buildReport(
         ).length
       : undefined);
 
-  if (indepClustersCount === 0) {
+  const hasGatedEvidence =
+    (options?.evidence !== undefined ? options.evidence.length > 0 : evaluations.some((e) => e.evidenceIds.length > 0)) &&
+    (indepClustersCount === undefined || indepClustersCount > 0);
+
+  if (indepClustersCount === 0 || !hasGatedEvidence) {
     if (finalVerdict === "verified_true" || finalVerdict === "mostly_true") {
       finalVerdict = "unverified";
     }
     finalConfidence = "low";
+    if (options?.comparison) {
+      options.comparison.claims.forEach((c) => {
+        c.agreementSummary = "none";
+      });
+      options.comparison.totalIndependentClusters = 0;
+    }
     if (scoreV2ShadowResult) {
       if (
         scoreV2ShadowResult.veracityVerdict === "verified_true" ||
@@ -156,9 +166,25 @@ export async function buildReport(
     if (finalConfidence === "high") {
       finalConfidence = "medium";
     }
+    if (options?.comparison) {
+      options.comparison.claims.forEach((c) => {
+        if (c.agreementSummary === "strong") {
+          c.agreementSummary = "moderate";
+        }
+      });
+    }
     if (scoreV2ShadowResult && scoreV2ShadowResult.confidence === "high") {
       scoreV2ShadowResult.confidence = "medium";
     }
+  }
+
+  // Low confidence cannot coexist with Strong agreement; derive both from the same gated data
+  if (finalConfidence === "low" && options?.comparison) {
+    options.comparison.claims.forEach((c) => {
+      if (c.agreementSummary === "strong") {
+        c.agreementSummary = "weak";
+      }
+    });
   }
 
   // Guardrail: if headline came only from slug, cap report confidence at "low"
@@ -212,6 +238,7 @@ export async function buildReport(
     sourceReadStatus: options?.sourceReadStatus,
     sourceReadNote: effectiveSourceReadNote,
     independentClustersCount: indepClustersCount,
+    hasGatedEvidence,
   });
 
   // 4. Generate grounded verification summary
@@ -293,6 +320,7 @@ export async function buildReport(
     scoreExplanation,
     storyStatus,
     conclusion,
+    hasGatedEvidence,
     ...(options?.comparison ? { comparison: options.comparison } : {}),
     ...(scoringV2Mode === "shadow" && scoreV2ShadowResult ? { scoreV2Shadow: scoreV2ShadowResult } : {}),
     ...(scoringV2Mode === "on" ? { scoreV1: scoreV1Result, scoreV2Shadow: scoreV2ShadowResult } : {}),

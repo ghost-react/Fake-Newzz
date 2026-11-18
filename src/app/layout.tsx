@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "FakeNewzz — Evidence-Based News Verification Platform",
   description:
-    "An objective, multi-source evidence verification engine. Cross-examines news claims against primary documents, international wires, and official gazettes without predetermined bias.",
+    "An objective, multi-source evidence verification engine. Cross-examines news article links against primary documents, international wires, and official gazettes without predetermined bias.",
   keywords: [
     "fact check",
     "news verification",

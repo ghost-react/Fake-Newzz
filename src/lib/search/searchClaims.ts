@@ -8,6 +8,7 @@ import {
 import { RawSearchResultItem, SearchProvider } from "./provider";
 import { SerperProvider } from "./serper";
 import { detectStatementIntent } from "@/lib/verification/statementIntent";
+import { classifyClaimKind } from "@/lib/verification/claimKind";
 
 /**
  * Normalizes a URL for deduplication purposes.
@@ -300,6 +301,32 @@ export function generateSearchQueries(claim: ClaimInput): string[] {
         addQuery(`${tokens.slice(0, 6).join(" ")} fact check`);
       }
     }
+    return queries.slice(0, maxQueries);
+  }
+
+  // Specialized search query generation for established facts (science, history, definitions)
+  const claimKind = claim.claimKind || classifyClaimKind(claim.text);
+  if (claimKind === "established_fact") {
+    const directQuery = cleanClaim.replace(/[.]+$/, "");
+    addQuery(directQuery);
+
+    const tokens = extractKeyTokens(cleanClaim);
+    if (tokens.length >= 2) {
+      if (maxQueries > 1) {
+        addQuery(`${tokens.slice(0, 6).join(" ")} encyclopedia facts reference`);
+      }
+      if (maxQueries > 2) {
+        addQuery(`${directQuery} myth debunked fact check`);
+      }
+    } else {
+      if (maxQueries > 1) {
+        addQuery(`${directQuery} facts encyclopedia`);
+      }
+      if (maxQueries > 2) {
+        addQuery(`${directQuery} myth debunked fact check`);
+      }
+    }
+
     return queries.slice(0, maxQueries);
   }
 
@@ -616,6 +643,10 @@ export function generateEventLevelQueries(
     }
   };
 
+  const hasEstablishedFact = claims.some(
+    (c) => (c.claimKind || classifyClaimKind(c.text)) === "established_fact"
+  );
+
   // Query 1: Primary Entity + Core Actions
   if (entities.length > 0) {
     const primaryEntity = entities[0];
@@ -625,7 +656,11 @@ export function generateEventLevelQueries(
     } else if (entities.length > 1) {
       addEventQuery(`${primaryEntity} ${entities[1]}`);
     } else {
-      addEventQuery(`${primaryEntity} news report`);
+      if (hasEstablishedFact) {
+        addEventQuery(`${primaryEntity} encyclopedia reference`);
+      } else {
+        addEventQuery(`${primaryEntity} news report`);
+      }
     }
   }
 

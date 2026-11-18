@@ -195,10 +195,13 @@ function determineVerdictInternal(
   let rule = `BASELINE_SCORE_${finalScore}`;
 
   // ── OVERRIDE RULE 1: FALSE ────────────────────────────────────────────────
-  if (primaryHighConfContradicting.length > 0) {
+  if (
+    primaryHighConfContradicting.length > 0 ||
+    primaryContradicting.some((e) => e.evidenceIds.length >= 2)
+  ) {
     if (
       primaryContradicting.length === primaryClaims.length ||
-      (primaryClaims.length === 1 && primaryHighConfContradicting.length === 1) ||
+      (primaryClaims.length === 1 && (primaryHighConfContradicting.length >= 1 || primaryContradicting.some((e) => e.evidenceIds.length >= 2))) ||
       (primaryContradicting.length > primarySupporting.length && primarySupporting.length === 0)
     ) {
       return { verdict: "false", rule: "OVERRIDE_RULE_1_CENTRAL_CLAIM_CONTRADICTED" };

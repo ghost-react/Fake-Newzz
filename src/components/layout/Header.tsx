@@ -33,7 +33,7 @@ export function Header({
     {
       id: "grid-shutdown-hoax",
       label: "Grid Blackout Hoax",
-      outlet: "Viral Social Audio",
+      outlet: "Regional Voice",
       verdict: "FALSE",
       badgeClass: "bg-rose-500/15 text-rose-300 border-rose-500/30",
     },
@@ -136,7 +136,7 @@ export function Header({
                   />
                   <div className="absolute right-0 mt-2 w-72 rounded-xl surface-card border border-white/10 p-2 shadow-2xl z-50 animate-in fade-in slide-in-from-top-1 duration-150">
                     <div className="px-3 py-1.5 text-[10px] font-mono uppercase tracking-wider text-[#717B89] border-b border-white/[0.06]">
-                      Preset Case Studies
+                      Example Articles
                     </div>
                     <div className="space-y-1 mt-1">
                       {samples.map((sample) => (
@@ -214,13 +214,13 @@ export function Header({
             </div>
 
             <p className="text-sm text-[#A1A1AA] leading-relaxed font-sans">
-              FakeNewzz is an independent digital verification system designed to evaluate factual claims against primary documents, official records, wire reports, and verified research.
+              FakeNewzz is an independent digital verification system designed to evaluate news articles against primary documents, official records, wire reports, and verified research.
             </p>
 
             <div className="space-y-3 border-t border-white/[0.08] pt-4 text-xs font-mono text-[#A1A1AA]">
               <div className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">01.</span>
-                <span>Atomic claim decomposition isolates testable assertions from opinion and rhetoric.</span>
+                <span>Assertion extraction isolates core reported facts from editorial commentary.</span>
               </div>
               <div className="flex items-start gap-2">
                 <span className="text-emerald-400 font-bold">02.</span>

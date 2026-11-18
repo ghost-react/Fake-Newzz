@@ -332,6 +332,93 @@
     "notes": "Genuinely false claim directly contradicted and refuted by fact-checkers; returns negative verdict.",
     "labeledBy": "benchmark-team",
     "labeledOn": "2026-11-10"
+  },
+  {
+    "id": "sun-revolves-around-earth",
+    "category": "false",
+    "inputType": "claim",
+    "input": "The Sun revolves around the Earth.",
+    "acceptableVerdicts": [
+      "false",
+      "mostly_false"
+    ],
+    "forbiddenVerdicts": [
+      "verified_true",
+      "mostly_true",
+      "unverified"
+    ],
+    "scoreRange": [
+      0,
+      30
+    ],
+    "notes": "Settled scientific fact: Earth revolves around the Sun. Claim stating the reverse must be False.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-17"
+  },
+  {
+    "id": "water-boils-100c-sea-level",
+    "category": "genuine",
+    "inputType": "claim",
+    "input": "Water boils at 100°C at sea level.",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "false",
+      "mostly_false",
+      "unverified"
+    ],
+    "scoreRange": [
+      75,
+      100
+    ],
+    "notes": "Settled scientific definition/fact: pure water boils at 100°C at standard atmospheric pressure.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-17"
+  },
+  {
+    "id": "india-independence-1947",
+    "category": "genuine",
+    "inputType": "claim",
+    "input": "India became independent in 1947.",
+    "acceptableVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "forbiddenVerdicts": [
+      "false",
+      "mostly_false",
+      "unverified"
+    ],
+    "scoreRange": [
+      75,
+      100
+    ],
+    "notes": "Settled historical fact: Indian Independence Act took effect in 1947.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-17"
+  },
+  {
+    "id": "india-independence-1950-detail-changed",
+    "category": "false",
+    "inputType": "claim",
+    "input": "India became independent in 1950.",
+    "acceptableVerdicts": [
+      "false",
+      "mostly_false"
+    ],
+    "forbiddenVerdicts": [
+      "verified_true",
+      "mostly_true"
+    ],
+    "scoreRange": [
+      0,
+      40
+    ],
+    "notes": "True-detail-changed historical event: India became a republic in 1950, but achieved independence in 1947. Must be False.",
+    "labeledBy": "benchmark-team",
+    "labeledOn": "2026-11-17"
   }
 ]
 

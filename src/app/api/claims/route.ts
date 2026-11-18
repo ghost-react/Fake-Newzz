@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { ClaimInput } from "@/schemas/evidence";
 import { decomposeStatementClaims } from "@/lib/verification/statementIntent";
 import { applyRouteGuard } from "@/lib/ratelimit/limiter";
+import { isTextInputEnabled } from "@/lib/config/flags";
 
 export const maxDuration = 300;
 
@@ -102,6 +103,19 @@ export async function POST(request: NextRequest) {
 
     const article = body?.article;
     const rawText = body?.text;
+
+    if (!isTextInputEnabled() && !article) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "INVALID_INPUT",
+            message: "FakeNewzz currently checks news article links. Paste a link to the article.",
+          },
+        },
+        { status: 400 }
+      );
+    }
 
     if (!article && !rawText) {
       return NextResponse.json(

@@ -1,6 +1,6 @@
 # FakeNewzz 🛡️
 
-**FakeNewzz** is an open-source, evidence-based news verification engine. It decomposes news articles, headlines, and claims into atomic assertions, cross-references them against independent primary sources, international wires, and official gazettes, and computes a transparent, deterministic trust score with zero LLM score hallucinations.
+**FakeNewzz** is an open-source, evidence-based news verification engine. It verifies news article links by decomposing their reported facts into atomic assertions, cross-referencing them against independent primary sources, international wires, and official gazettes, and computing a transparent, deterministic trust score with zero LLM score hallucinations.
 
 ---
 
@@ -9,7 +9,7 @@
 FakeNewzz follows a rigorous, multi-stage verification pipeline:
 
 ```
-[News URL / Headline / Text]
+[News Article Link]
              │
              ▼
 1. INGESTION & READABILITY (Firecrawl + Direct Fallback + SSRF Protection)

@@ -3,19 +3,21 @@ import { classifySourceType } from "./sourceClassifier";
 import { analyzeSourceRelationships, EvidenceForRelationship } from "./sourceRelationship";
 import { computeEvidenceQuality, computeRankScore, estimateRelevance } from "./evidenceRanking";
 import { normalizeUrlForDeduplication } from "./searchClaims";
+import { gateEvidenceSpecifics } from "./relevanceGate";
 import { traceStage } from "../debug/trace";
 
 /**
  * Orchestrates the complete Phase 4 evidence ranking pipeline for a single claim.
  *
  * Pipeline:
- * 1. URL deduplication (defensive — Phase 3 should have already done this)
- * 2. Source type classification (recalculated server-side, ignoring client input)
- * 3. Source relationship analysis (cross-item comparison)
- * 4. Evidence quality computation (based on sourceType + sourceRelationship)
- * 5. Relevance estimation (keyword/entity overlap with claim text)
- * 6. Composite ranking (no search-position influence)
- * 7. Schema validation (strict Zod parse)
+ * 1. URL deduplication
+ * 1b. Relevance & specifics gate (rejects homepages/tags and requires subject + predicate + details)
+ * 2. Source type classification
+ * 3. Source relationship analysis
+ * 4. Evidence quality computation
+ * 5. Relevance estimation
+ * 6. Composite ranking
+ * 7. Schema validation
  *
  * ZERO-VERDICT RULE:
  * This function does NOT determine whether evidence supports or contradicts the claim.
@@ -42,8 +44,32 @@ export function rankEvidenceForClaim(
     return true;
   });
 
+  // ── Step 1b: Relevance & Specifics Gate (Step 2.A) ────────────────────────
+  const gated = deduplicated.filter((ev) => {
+    const gateResult = gateEvidenceSpecifics(claim, ev);
+    if (!gateResult.passed) {
+      droppedUrls.push({ url: ev.url, reason: gateResult.reason || "relevance_gate_failed" });
+      return false;
+    }
+    return true;
+  });
+
+  try {
+    traceStage("relevance_gate", {
+      claimId: claim.id,
+      totalRaw: rawEvidence.length,
+      gatedPassed: gated.length,
+      droppedCount: droppedUrls.length,
+      dropped: droppedUrls,
+    });
+  } catch {}
+
+  if (gated.length === 0) {
+    return [];
+  }
+
   // ── Step 2: Classify source type (server-side, ignoring client input) ────
-  const withSourceType = deduplicated.map((ev) => ({
+  const withSourceType = gated.map((ev) => ({
     ...ev,
     classifiedSourceType: classifySourceType(ev.domain, ev.url),
   }));

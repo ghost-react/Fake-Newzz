@@ -67,6 +67,17 @@ export function ScoreCard({ report, className }: ScoreCardProps) {
       />
 
       <div className="relative z-10 flex flex-col gap-5">
+        {/* Notice for legacy text-type reports */}
+        {(!report.articleUrl || report.sourceDomain === "Independent Claim") && (
+          <div
+            data-testid="legacy-text-input-notice"
+            className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-3 text-xs sm:text-sm text-amber-300 shadow-sm"
+          >
+            <Info className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-amber-400" />
+            <span>This check used an input type that is no longer available.</span>
+          </div>
+        )}
+
         {/* Neutral grey info note above score when original article could not be read */}
         {(report.sourceReadStatus === "unreadable" ||
           report.sourceReadStatus === "failed" ||
@@ -78,7 +89,7 @@ export function ScoreCard({ report, className }: ScoreCardProps) {
             <Info className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-slate-400" />
             <span>
               {report.sourceReadNote ||
-                "We couldn't read the original article, so this result is based on independent reporting of the same story."}
+                "The publisher may block automated access or require a subscription. Try another link to the same story."}
             </span>
           </div>
         )}
@@ -94,15 +105,23 @@ export function ScoreCard({ report, className }: ScoreCardProps) {
                 backgroundColor: "var(--tone-soft, " + verdictInfo.colorToken + "10)",
               }}
             >
-              <span
-                className="text-4xl sm:text-5xl font-mono font-bold tracking-tight transition-colors duration-300"
-                style={{ color: "var(--tone-text, " + verdictInfo.colorToken + ")" }}
-              >
-                {report.overallTrustScore}
-              </span>
-              <span className="text-[11px] font-mono uppercase tracking-widest text-[#A1A1AA]">
-                / 100
-              </span>
+              {report.conclusion?.label === "Can't verify" || report.hasGatedEvidence === false ? (
+                <span className="text-lg sm:text-xl font-mono font-bold tracking-tight text-center px-1 text-[#94A3B8]">
+                  No score
+                </span>
+              ) : (
+                <>
+                  <span
+                    className="text-4xl sm:text-5xl font-mono font-bold tracking-tight transition-colors duration-300"
+                    style={{ color: "var(--tone-text, " + verdictInfo.colorToken + ")" }}
+                  >
+                    {report.overallTrustScore}
+                  </span>
+                  <span className="text-[11px] font-mono uppercase tracking-widest text-[#A1A1AA]">
+                    / 100
+                  </span>
+                </>
+              )}
             </div>
           </div>
 

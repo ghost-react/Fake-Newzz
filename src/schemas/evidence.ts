@@ -28,6 +28,16 @@ export const CLAIM_CERTAINTIES = [
 export type ClaimCertainty = (typeof CLAIM_CERTAINTIES)[number];
 export const ClaimCertaintySchema = z.enum(CLAIM_CERTAINTIES);
 
+export const CLAIM_KINDS = [
+  "news_event",
+  "established_fact",
+  "opinion",
+  "prediction",
+] as const;
+
+export type ClaimKind = (typeof CLAIM_KINDS)[number];
+export const ClaimKindSchema = z.enum(CLAIM_KINDS);
+
 /**
  * Input Atomic Claim for evidence search
  */
@@ -42,6 +52,7 @@ export const ClaimInputSchema = z
     claimType: z.string().trim().default("factual"),
     layer: ClaimLayerSchema.default("underlying_fact").optional(),
     certainty: ClaimCertaintySchema.default("asserted_fact").optional(),
+    claimKind: ClaimKindSchema.default("news_event").optional(),
     linkedClaimId: z.string().trim().nullable().optional(),
   })
   .strict();
@@ -250,6 +261,7 @@ export type ClaimSearchResult = z.infer<typeof ClaimSearchResultSchema>;
 export const RankClaimInputSchema = z.object({
   id: z.string().trim().min(1, { message: "Claim ID cannot be empty" }),
   text: z.string().trim().min(1, { message: "Claim text cannot be empty" }),
+  claimKind: ClaimKindSchema.optional(),
 });
 export type RankClaimInput = z.infer<typeof RankClaimInputSchema>;
 

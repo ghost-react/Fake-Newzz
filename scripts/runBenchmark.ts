@@ -779,6 +779,19 @@ async function main() {
   // 1. Filter out cases whose input is "TODO"
   let activeCases = validatedCases.filter((c) => c.input.trim() !== "TODO");
 
+  const textInputEnabled = process.env.TEXT_INPUT_ENABLED === "true";
+  let skippedTextCases = 0;
+  if (!textInputEnabled) {
+    activeCases = activeCases.filter((c) => {
+      const isUrl = c.inputType === "url" || c.input.startsWith("http://") || c.input.startsWith("https://");
+      if (!isUrl) {
+        skippedTextCases++;
+        return false;
+      }
+      return true;
+    });
+  }
+
   if (categoryFilter) {
     activeCases = activeCases.filter((c) => c.category === categoryFilter);
   }
@@ -797,7 +810,10 @@ async function main() {
   }
 
   console.log(`Total defined cases:    ${validatedCases.length}`);
-  console.log(`Active testable cases:  ${activeCases.length} (${validatedCases.length - activeCases.length} skipped with input "TODO")\n`);
+  console.log(`Active testable cases:  ${activeCases.length} (${validatedCases.length - activeCases.length} skipped with input "TODO" or TEXT_INPUT_ENABLED=false)\n`);
+  if (skippedTextCases > 0) {
+    console.log(`ℹ Marked ${skippedTextCases} text-type cases as skipped (TEXT_INPUT_ENABLED is false).\n`);
+  }
 
   const resultsDir = path.join(process.cwd(), "tests", "benchmark", "results");
   if (!fs.existsSync(resultsDir)) {

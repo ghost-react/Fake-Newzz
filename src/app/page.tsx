@@ -21,8 +21,10 @@ import {
   detectInputType,
   parseAndAnalyzeInput,
   validateInput,
+  isNonArticleUrl,
   DetectedInputType,
 } from "@/lib/input/detectInputType";
+import { isTextInputEnabled } from "@/lib/config/flags";
 import { ShieldCheck } from "lucide-react";
 
 /**
@@ -157,7 +159,11 @@ export default function HomePage() {
     if (!val.valid) {
       setError({
         type: "INVALID_URL",
-        message: val.error || "Please enter a valid news URL, headline, or claim to verify.",
+        message:
+          val.error ||
+          (!isTextInputEnabled()
+            ? "FakeNewzz currently checks news article links. Paste a link to the article."
+            : "Please enter a valid news URL, headline, or claim to verify."),
       });
       setStage("error");
       return;
@@ -165,6 +171,26 @@ export default function HomePage() {
 
     // 3. Detect and analyze input type (url, headline, claim, text)
     const analyzed = parseAndAnalyzeInput(val.sanitized, type);
+
+    if (!isTextInputEnabled()) {
+      if (analyzed.type !== "url" || !analyzed.url) {
+        setError({
+          type: "INVALID_URL",
+          message: "FakeNewzz currently checks news article links. Paste a link to the article.",
+        });
+        setStage("error");
+        return;
+      }
+
+      if (isNonArticleUrl(analyzed.url)) {
+        setError({
+          type: "INVALID_URL",
+          message: "Paste the link to a specific article.",
+        });
+        setStage("error");
+        return;
+      }
+    }
 
     // 4. Check for mock preset by exact key match
     if (MOCK_REPORTS[analyzed.text]) {
@@ -196,8 +222,8 @@ export default function HomePage() {
       return;
     }
 
-    // 5. Non-URL Verification Flow (headline, claim, text)
-    if (analyzed.type !== "url") {
+    // 5. Non-URL Verification Flow (headline, claim, text) - only if TEXT_INPUT_ENABLED
+    if (isTextInputEnabled() && analyzed.type !== "url") {
       setStage("verifying");
       setLoadingStep(1);
       const headlineSnippet = analyzed.text.split("\n")[0].slice(0, 100);
@@ -312,7 +338,7 @@ export default function HomePage() {
             type: "EXTRACTION_FAILED",
             message:
               articleData?.error?.message ||
-              "We couldn't read this article. Please paste the headline or key claims directly to verify this story.",
+              "The publisher may block automated access or require a subscription. Try another link to the same story.",
           });
         }
         return;
@@ -373,7 +399,7 @@ export default function HomePage() {
         setError({
           type: "EXTRACTION_FAILED",
           message:
-            "We couldn't read this article and found no independent reporting. Please paste the headline or key claims directly to verify this story.",
+            "The publisher may block automated access or require a subscription. Try another link to the same story.",
         });
         return;
       }
@@ -450,7 +476,7 @@ export default function HomePage() {
             type: "EXTRACTION_FAILED",
             message:
               reportData.summary ||
-              "We couldn't read this article and found no independent reporting. Please paste the headline or key claims directly to verify this story.",
+              "The publisher may block automated access or require a subscription. Try another link to the same story.",
           });
           return;
         }
@@ -619,10 +645,10 @@ export default function HomePage() {
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="font-editorial text-2xl font-bold text-[#F5F5F5]">
-                  Paste a news story above to check its trustworthiness.
+                  Paste a news article link above to check its trustworthiness.
                 </h3>
                 <p className="text-xs sm:text-sm text-[#A1A1AA] font-sans leading-relaxed">
-                  FakeNewzz isolates core claims, cross-references independent primary records, and identifies missing context so you get a transparent, evidence-backed trust score.
+                  FakeNewzz analyzes the article, cross-references independent primary records, and identifies missing context so you get a transparent, evidence-backed trust score.
                 </p>
               </div>
             )}

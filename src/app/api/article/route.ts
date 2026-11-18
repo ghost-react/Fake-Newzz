@@ -4,6 +4,8 @@ import { Article, ArticleApiResponse } from "@/schemas/article";
 import { recoverHeadline } from "@/lib/ingestion/headlineRecovery";
 import { SerperProvider } from "@/lib/search/serper";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
+import { isNonArticleUrl } from "@/lib/input/detectInputType";
+import { isUnreadableFallbackEnabled } from "@/lib/config/flags";
 
 export const maxDuration = 300;
 
@@ -49,6 +51,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<ArticleAp
       );
     }
 
+    // Check non-article URL (bare homepages, search pages)
+    if (isNonArticleUrl(rawUrl)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: {
+            code: "INVALID_URL",
+            message: "Paste the link to a specific article.",
+          },
+        },
+        { status: 400 }
+      );
+    }
+
     // 3. SSRF and Protocol Security Verification
     const urlValidation = validateSafeUrl(rawUrl);
     if (!urlValidation.isValid || !urlValidation.sanitizedUrl) {
@@ -77,6 +93,21 @@ export async function POST(request: NextRequest): Promise<NextResponse<ArticleAp
       );
     } catch (err: any) {
       // Ingestion failed (blocked, 403/429, empty body, timeout, paywall).
+      // With UNREADABLE_FALLBACK_ENABLED=false, stop here and never start headline recovery
+      if (!isUnreadableFallbackEnabled()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: {
+              code: "ARTICLE_EXTRACTION_FAILED",
+              message:
+                "The publisher may block automated access or require a subscription. Try another link to the same story.",
+            },
+          },
+          { status: 422 }
+        );
+      }
+
       // Attempt headline recovery without reading the blocked page:
       // a. Any title or og:title metadata already returned by the fetch attempt
       // b. Exact URL search via search provider
@@ -117,13 +148,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<ArticleAp
         // Recovery failed; proceed to standard error response below
       }
 
-      // If recovery produces nothing, return error with clear suggestion to paste headline/text
+      // If recovery produces nothing, return error with clear suggestion
       return NextResponse.json(
         {
           success: false,
           error: {
             code: "ARTICLE_EXTRACTION_FAILED",
-            message: "We couldn't read this article. Please paste the headline or key claims directly to verify this story.",
+            message:
+              "The publisher may block automated access or require a subscription. Try another link to the same story.",
           },
         },
         { status: 422 }

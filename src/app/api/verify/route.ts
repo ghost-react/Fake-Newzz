@@ -31,10 +31,12 @@ import { Article } from "@/schemas/article";
 import { ClaimEvaluation } from "@/schemas/evaluation";
 import { Omission } from "@/schemas/omission";
 import { recoverHeadline, HeadlineSource } from "@/lib/ingestion/headlineRecovery";
-import { parseAndAnalyzeInput, validateInput } from "@/lib/input/detectInputType";
+import { parseAndAnalyzeInput, validateInput, extractArticleUrl, isNonArticleUrl } from "@/lib/input/detectInputType";
 import { decomposeStatementClaims, detectStatementIntent } from "@/lib/verification/statementIntent";
 import { inferClaimCertainty } from "@/lib/verification/claimExtractor";
+import { classifyClaimKind } from "@/lib/verification/claimKind";
 import { applyRouteGuard, sanitizeErrorMessage } from "@/lib/ratelimit/limiter";
+import { isTextInputEnabled, isUnreadableFallbackEnabled } from "@/lib/config/flags";
 
 export const maxDuration = 300;
 
@@ -179,6 +181,33 @@ async function handlePost(request: NextRequest) {
 
     // ── CASE A: Pre-evaluated inputs (from step-by-step pipeline) ──────────────
     if (body.claims && Array.isArray(body.claims) && body.evaluations && Array.isArray(body.evaluations)) {
+      if (!isTextInputEnabled()) {
+        const inputType = body?.inputType;
+        const effectiveUrl = body?.articleUrl || body?.url || body?.article?.url;
+        if (inputType && inputType !== "url") {
+          return NextResponse.json(
+            {
+              error: {
+                code: "INVALID_INPUT",
+                message: "FakeNewzz currently checks news article links. Paste a link to the article.",
+              },
+            },
+            { status: 400 }
+          );
+        }
+        if (!effectiveUrl) {
+          return NextResponse.json(
+            {
+              error: {
+                code: "INVALID_INPUT",
+                message: "FakeNewzz currently checks news article links. Paste a link to the article.",
+              },
+            },
+            { status: 400 }
+          );
+        }
+      }
+
       const articleTitle = body.articleTitle || body.article?.title || "Analyzed Article";
       const sourceDomain = body.sourceDomain || body.article?.sourceDomain || "unknown";
       const featuredImage = body.featuredImage || body.article?.featuredImage || null;
@@ -235,10 +264,10 @@ async function handlePost(request: NextRequest) {
     const diagnostics = new VerificationDiagnostics();
 
     const rawInput =
-      typeof body?.input === "string" && body.input.trim()
-        ? body.input.trim()
-        : typeof body?.url === "string" && body.url.trim()
+      typeof body?.url === "string" && body.url.trim()
         ? body.url.trim()
+        : typeof body?.input === "string" && body.input.trim()
+        ? body.input.trim()
         : "";
 
     if (!rawInput) {
@@ -246,7 +275,9 @@ async function handlePost(request: NextRequest) {
         {
           error: {
             code: "INVALID_INPUT",
-            message: "A valid news article URL, headline, or claim must be provided.",
+            message: !isTextInputEnabled()
+              ? "FakeNewzz currently checks news article links. Paste a link to the article."
+              : "A valid news article URL, headline, or claim must be provided.",
           },
         },
         { status: 400 }
@@ -267,6 +298,32 @@ async function handlePost(request: NextRequest) {
     }
 
     const parsedInput = parseAndAnalyzeInput(rawInput, body?.inputType);
+
+    if (!isTextInputEnabled()) {
+      if (parsedInput.type !== "url" || !parsedInput.url) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "INVALID_INPUT",
+              message: "FakeNewzz currently checks news article links. Paste a link to the article.",
+            },
+          },
+          { status: 400 }
+        );
+      }
+
+      if (isNonArticleUrl(parsedInput.url)) {
+        return NextResponse.json(
+          {
+            error: {
+              code: "INVALID_INPUT",
+              message: "Paste the link to a specific article.",
+            },
+          },
+          { status: 400 }
+        );
+      }
+    }
 
     try {
       traceStage("input", {
@@ -358,6 +415,33 @@ async function handlePost(request: NextRequest) {
 
         const domain = new URL(urlValidation.sanitizedUrl!).hostname.replace(/^www\./i, "");
 
+        // When unreadable fallback is disabled, do not attempt headline recovery and do not evaluate failed content
+        if (!isUnreadableFallbackEnabled()) {
+          return NextResponse.json(
+            {
+              articleTitle: "We couldn't read this article",
+              sourceDomain: domain,
+              articleUrl: urlValidation.sanitizedUrl!,
+              featuredImage: null,
+              author: null,
+              publishedAt: null,
+              overallTrustScore: 0,
+              veracityVerdict: "could_not_read",
+              confidence: "low",
+              summary:
+                "The publisher may block automated access or require a subscription. Try another link to the same story.",
+              claimSummary: { total: 0, supporting: 0, contradicting: 0, qualifying: 0, insufficient: 0 },
+              evaluations: [],
+              omittedContext: [],
+              scoreBreakdown: { claimScore: 0, contextPenalty: 0, confidenceAdjustment: 0, finalScore: 0 },
+              sourceReadStatus: "could_not_read",
+              sourceReadNote:
+                "The publisher may block automated access or require a subscription. Try another link to the same story.",
+            },
+            { status: 200 }
+          );
+        }
+
         if (!recovery || !recovery.headline) {
           try {
             traceStage("ingestion", {
@@ -372,7 +456,7 @@ async function handlePost(request: NextRequest) {
 
           return NextResponse.json(
             {
-              articleTitle: "Couldn't read this article",
+              articleTitle: "We couldn't read this article",
               sourceDomain: domain,
               articleUrl: urlValidation.sanitizedUrl!,
               featuredImage: null,
@@ -381,13 +465,13 @@ async function handlePost(request: NextRequest) {
               overallTrustScore: 0,
               veracityVerdict: "could_not_read",
               confidence: "low",
-              summary: "We couldn't read the original article, and no story could be identified from the URL. Please paste the headline or text.",
+              summary: "The publisher may block automated access or require a subscription. Try another link to the same story.",
               claimSummary: { total: 0, supporting: 0, contradicting: 0, qualifying: 0, insufficient: 0 },
               evaluations: [],
               omittedContext: [],
               scoreBreakdown: { claimScore: 0, contextPenalty: 0, confidenceAdjustment: 0, finalScore: 0 },
               sourceReadStatus: "could_not_read",
-              sourceReadNote: "Couldn't read this article. Ingestion failed and no headline could be derived from the URL.",
+              sourceReadNote: "The publisher may block automated access or require a subscription. Try another link to the same story.",
             },
             { status: 200 }
           );
@@ -475,13 +559,15 @@ async function handlePost(request: NextRequest) {
             decomposeStatementClaims(rawInput, "claim")
           );
         } else {
+          const kind = classifyClaimKind(rawInput);
           claims = [
             {
               id: "claim-1",
               text: rawInput,
               importance: "high",
-              claimType: "event",
-              layer: "event_occurred",
+              claimType: kind === "established_fact" ? "factual" : "event",
+              claimKind: kind,
+              layer: kind === "established_fact" ? "underlying_fact" : "event_occurred",
               certainty: inferClaimCertainty(rawInput),
             },
           ];
@@ -586,7 +672,7 @@ async function handlePost(request: NextRequest) {
     if (isIngestionFallback && allRankedEvidence.length === 0) {
       return NextResponse.json(
         {
-          articleTitle: article.title || "Couldn't read this article",
+          articleTitle: article.title || "We couldn't read this article",
           sourceDomain: article.sourceDomain,
           articleUrl: article.url || null,
           featuredImage: null,
@@ -595,13 +681,13 @@ async function handlePost(request: NextRequest) {
           overallTrustScore: 0,
           veracityVerdict: "could_not_read",
           confidence: "low",
-          summary: "We couldn't read this article and found no independent reporting. Please paste the headline or key claims directly to verify this story.",
+          summary: "The publisher may block automated access or require a subscription. Try another link to the same story.",
           claimSummary: { total: 0, supporting: 0, contradicting: 0, qualifying: 0, insufficient: 0 },
           evaluations: [],
           omittedContext: [],
           scoreBreakdown: { claimScore: 0, contextPenalty: 0, confidenceAdjustment: 0, finalScore: 0 },
           sourceReadStatus: "could_not_read",
-          sourceReadNote: "Couldn't read this article. Ingestion failed and no independent reporting was found. Please paste the headline or text.",
+          sourceReadNote: "The publisher may block automated access or require a subscription. Try another link to the same story.",
         },
         { status: 200 }
       );

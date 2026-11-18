@@ -21,7 +21,7 @@ export function SearchBar({
   onSearch,
   isLoading = false,
   initialQuery = "",
-  placeholder = "Paste a news link, headline or claim",
+  placeholder = "Paste a news article link",
   className,
 }: SearchBarProps) {
   const [query, setQuery] = useState(initialQuery);
@@ -39,16 +39,10 @@ export function SearchBar({
   };
 
   const getBadgeInfo = (type: DetectedInputType) => {
-    switch (type) {
-      case "url":
-        return { label: "News URL", icon: Link2 };
-      case "claim":
-        return { label: "Quote / Claim", icon: MessageSquare };
-      case "headline":
-        return { label: "Headline", icon: Sparkles };
-      case "text":
-        return { label: "Full Text", icon: FileText };
+    if (type === "url") {
+      return { label: "News Article Link", icon: Link2 };
     }
+    return null;
   };
 
   const badge = query.trim() ? getBadgeInfo(detectedType) : null;
@@ -71,7 +65,7 @@ export function SearchBar({
             disabled={isLoading}
             placeholder={placeholder}
             className="w-full bg-transparent px-3.5 py-4 sm:py-5 text-sm sm:text-base text-[#F5F5F5] placeholder:text-[#64748B] focus:outline-none disabled:opacity-50"
-            aria-label="Article URL, headline, or claim to verify"
+            aria-label="Paste a news article link"
           />
 
           {/* Automatic Type Indicator Badge */}

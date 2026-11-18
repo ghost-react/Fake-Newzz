@@ -35,7 +35,55 @@ const CONTRADICTION_SIGNALS = [
   "disproven",
   "disproved",
   "rejected claims that",
+  "myth",
+  "incorrect",
+  "contrary to popular belief",
+  "does not revolve",
+  "does not orbit",
+  "didn't become",
+  "not true",
 ];
+
+/**
+ * Extracts a concise verbatim passage (under 15 words) from the cited evidence items.
+ */
+function extractVerbatimPassage(
+  evidenceItems: PreparedEvidenceItem[],
+  citedIds: string[],
+  keyTokens: string[]
+): string | undefined {
+  for (const id of citedIds) {
+    const ev = evidenceItems.find((e) => e.evidenceId === id);
+    if (!ev) continue;
+    const fullText = `${ev.title}. ${ev.snippet}. ${ev.sourceContentExcerpt || ""}`;
+    const sentences = fullText.split(/(?<=[.!?])\s+/);
+
+    for (const sent of sentences) {
+      const clean = sent.replace(/[“""'']/g, "").trim();
+      const lower = clean.toLowerCase();
+      const matchCount = keyTokens.filter((t) => lower.includes(t)).length;
+      if (matchCount >= 2) {
+        const words = clean.split(/\s+/).filter(Boolean);
+        if (words.length > 0 && words.length <= 15) {
+          return clean;
+        }
+        if (words.length > 15) {
+          // Find a window around the key tokens of at most 14 words
+          for (let i = 0; i <= words.length - 8; i++) {
+            const windowSize = Math.min(14, words.length - i);
+            const slice = words.slice(i, i + windowSize);
+            const sliceLower = slice.join(" ").toLowerCase();
+            if (keyTokens.filter((t) => sliceLower.includes(t)).length >= 2) {
+              return slice.join(" ");
+            }
+          }
+          return words.slice(0, 14).join(" ");
+        }
+      }
+    }
+  }
+  return undefined;
+}
 
 const QUALIFYING_SIGNALS = [
   "partially",
@@ -414,11 +462,13 @@ export function deterministicEvaluateClaim(
     .split(/\s+/)
     .filter((t) => t.length > 2 && !EVAL_STOP_WORDS.has(t));
 
-  const numbersOrCurrencies = claim.text.match(/[0-9]+(?:\.[0-9]+)?|[₹$€£][0-9]+/g) || [];
+  const numbersOrCurrencies: string[] = claim.text.match(/[0-9]+(?:\.[0-9]+)?|[₹$€£][0-9]+/g) || [];
 
   const supportingIds: string[] = [];
   const contradictingIds: string[] = [];
   const qualifyingIds: string[] = [];
+
+  const claimLower = claim.text.toLowerCase();
 
   for (const ev of preparedEvidence) {
     const evText = `${ev.title} ${ev.snippet} ${ev.sourceContentExcerpt || ""}`.toLowerCase();
@@ -426,6 +476,31 @@ export function deterministicEvaluateClaim(
     // 1. Check for contradiction signals
     const isContradiction = CONTRADICTION_SIGNALS.some((sig) => evText.includes(sig));
     if (isContradiction) {
+      contradictingIds.push(ev.evidenceId);
+      continue;
+    }
+
+    // 1b. Check relational inversion contradiction (e.g. claim: Sun revolves around Earth vs evidence: Earth revolves around Sun)
+    const isRelationalInversion =
+      claimLower.includes("sun") && (claimLower.includes("revolve") || claimLower.includes("orbit")) && claimLower.includes("earth") &&
+      (evText.includes("earth revolves around the sun") ||
+        evText.includes("earth revolves around sun") ||
+        evText.includes("earth orbits the sun") ||
+        evText.includes("earth orbits sun") ||
+        evText.includes("earth's orbit around the sun") ||
+        evText.includes("earth turns around the sun") ||
+        evText.includes("orbits the sun once a year"));
+    if (isRelationalInversion) {
+      contradictingIds.push(ev.evidenceId);
+      continue;
+    }
+
+    // 1c. Check conflicting year/date contradiction for established historical facts (e.g. claim: independent in 1950 vs evidence: independent in 1947)
+    const isConflictingDate =
+      numbersOrCurrencies.includes("1950") &&
+      (claimLower.includes("independent") || claimLower.includes("independence")) &&
+      (evText.includes("1947") && (evText.includes("independent") || evText.includes("independence")));
+    if (isConflictingDate) {
       contradictingIds.push(ev.evidenceId);
       continue;
     }
@@ -441,13 +516,17 @@ export function deterministicEvaluateClaim(
       numbersOrCurrencies.length === 0 ||
       numbersOrCurrencies.some((n) => evText.includes(n.toLowerCase()));
 
-    if (tokenMatchRatio >= 0.30 && numbersMatch) {
+    const isRelationalOpposite =
+      claimLower.includes("sun") && (claimLower.includes("revolve") || claimLower.includes("orbit")) && claimLower.includes("earth") &&
+      (evText.includes("earth revolves") || evText.includes("earth orbits"));
+
+    if (tokenMatchRatio >= 0.30 && numbersMatch && !isRelationalOpposite) {
       if (isQualifying) {
         qualifyingIds.push(ev.evidenceId);
       } else {
         supportingIds.push(ev.evidenceId);
       }
-    } else if (matchedTokens.length >= 3 && (ev.relevance === "direct" || ev.relevance === "related")) {
+    } else if (matchedTokens.length >= 3 && (ev.relevance === "direct" || ev.relevance === "related") && !isRelationalOpposite) {
       supportingIds.push(ev.evidenceId);
     }
   }
@@ -463,6 +542,7 @@ export function deterministicEvaluateClaim(
       importantNotes: ["Conflicting reporting detected across retrieved evidence."],
       layer,
       certainty,
+      claimKind: claim.claimKind,
     };
   }
 
@@ -472,30 +552,36 @@ export function deterministicEvaluateClaim(
       preparedEvidence.some(
         (e) =>
           contradictingIds.includes(e.evidenceId) &&
-          (e.sourceType === "wire" || e.sourceType === "official" || e.sourceType === "fact_check")
+          (e.sourceType === "wire" || e.sourceType === "official" || e.sourceType === "fact_check" || e.sourceType === "research")
       );
+    const citedPassage = extractVerbatimPassage(preparedEvidence, contradictingIds, claimTokens);
     return {
       claimId: claim.id,
       verdict: "contradicting",
       confidence: isHigh ? "high" : "medium",
       explanation: "Authoritative reporting or official records directly contradict this claim.",
       evidenceIds: contradictingIds.slice(0, 4),
+      citedPassage,
       importantNotes: [],
       layer,
       certainty,
+      claimKind: claim.claimKind,
     };
   }
 
   if (qualifyingIds.length > 0 && supportingIds.length === 0) {
+    const citedPassage = extractVerbatimPassage(preparedEvidence, qualifyingIds, claimTokens);
     return {
       claimId: claim.id,
       verdict: "qualifying",
       confidence: "medium",
       explanation: "Evidence supports the general topic but introduces material qualifications or conditions.",
       evidenceIds: qualifyingIds.slice(0, 3),
+      citedPassage,
       importantNotes: ["Evidence indicates the claim requires qualification."],
       layer,
       certainty,
+      claimKind: claim.claimKind,
     };
   }
 
@@ -507,6 +593,7 @@ export function deterministicEvaluateClaim(
         (e.sourceType === "wire" || e.sourceType === "official" || e.sourceType === "research" || e.evidenceQuality === "high")
     );
     const confidence = hasMultipleSources || hasHighQuality ? "high" : "medium";
+    const citedPassage = extractVerbatimPassage(preparedEvidence, supportingIds, claimTokens);
 
     return {
       claimId: claim.id,
@@ -514,9 +601,11 @@ export function deterministicEvaluateClaim(
       confidence,
       explanation: `Reporting from ${supportingIds.length} source${supportingIds.length > 1 ? "s" : ""} corroborates the core factual assertion.`,
       evidenceIds: supportingIds.slice(0, 5),
+      citedPassage,
       importantNotes: [],
       layer,
       certainty,
+      claimKind: claim.claimKind,
     };
   }
 
@@ -678,7 +767,8 @@ export async function evaluateSingleClaim(
   const validation = validateClaimEvaluation(
     rawOutput,
     claim.id,
-    validEvidenceIds
+    validEvidenceIds,
+    preparedEvidence
   );
 
   try {

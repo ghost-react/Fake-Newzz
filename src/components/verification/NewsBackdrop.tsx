@@ -447,7 +447,7 @@ export function NewsBackdrop({
               <Search className="w-3.5 h-3.5 text-[#717B89] absolute left-2.5 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Verify story, URL or claim..."
+                placeholder="Paste a news article link"
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && onSearch) {
                     onSearch((e.target as HTMLInputElement).value);
@@ -502,6 +502,17 @@ export function NewsBackdrop({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* Left Column over Left Scrim: Spans 7 (min-width 480px, never below 55% of container) */}
           <div className="lg:col-span-7 min-w-0 lg:min-w-[480px] lg:w-full space-y-5">
+            {/* Notice for legacy text-type reports */}
+            {(!report.articleUrl || report.sourceDomain === "Independent Claim") && (
+              <div
+                data-testid="legacy-text-input-notice"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs sm:text-sm text-amber-300 font-medium backdrop-blur-sm shadow-sm"
+              >
+                <Info className="w-4 h-4 shrink-0 text-amber-400" />
+                <span>This check used an input type that is no longer available.</span>
+              </div>
+            )}
+
             {/* Unreadable / Warning Source Note (if applicable) */}
             {(report.sourceReadStatus === "unreadable" ||
               report.sourceReadStatus === "failed" ||
@@ -516,7 +527,7 @@ export function NewsBackdrop({
                   {report.veracityVerdict === "unverified" && findingsSummary.independentCount === 0
                     ? "No independent reporting of this event was found."
                     : report.sourceReadNote ||
-                      "We couldn't read the original article, so this check is based on independent reporting."}
+                      "The publisher may block automated access or require a subscription. Try another link to the same story."}
                 </span>
               </div>
             )}
@@ -538,11 +549,12 @@ export function NewsBackdrop({
                 <span>{heroLabel}</span>
               </span>
 
-              <span className="text-[#A1A1AA]">·</span>
-
-              <span className="text-[#E2E8F0]">
-                {report.sourceDomain}
-              </span>
+              {report.sourceDomain && report.sourceDomain !== "Independent Claim" && (
+                <>
+                  <span className="text-[#A1A1AA]">·</span>
+                  <span className="text-[#E2E8F0]">{report.sourceDomain}</span>
+                </>
+              )}
 
               {report.publishedAt && (
                 <>
@@ -576,15 +588,23 @@ export function NewsBackdrop({
                   backgroundColor: "var(--tone-soft, " + verdictInfo.colorToken + "15)",
                 }}
               >
-                <span
-                  className="text-2xl sm:text-3xl font-mono font-bold tracking-tight transition-colors duration-300"
-                  style={{ color: "var(--tone-text, " + verdictInfo.colorToken + ")" }}
-                >
-                  {report.overallTrustScore}
-                </span>
-                <span className="text-[9px] font-mono uppercase tracking-widest text-[#A1A1AA]">
-                  / 100
-                </span>
+                {report.conclusion?.label === "Can't verify" || report.hasGatedEvidence === false ? (
+                  <span className="text-[11px] sm:text-xs font-mono font-bold text-[#94A3B8] text-center px-1">
+                    No score
+                  </span>
+                ) : (
+                  <>
+                    <span
+                      className="text-2xl sm:text-3xl font-mono font-bold tracking-tight transition-colors duration-300"
+                      style={{ color: "var(--tone-text, " + verdictInfo.colorToken + ")" }}
+                    >
+                      {report.overallTrustScore}
+                    </span>
+                    <span className="text-[9px] font-mono uppercase tracking-widest text-[#A1A1AA]">
+                      / 100
+                    </span>
+                  </>
+                )}
               </div>
 
               {/* Verdict text & one-line meaning */}

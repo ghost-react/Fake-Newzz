@@ -1,5 +1,6 @@
 import { ClaimInput } from "@/schemas/evidence";
 import { inferClaimCertainty } from "./claimExtractor";
+import { classifyClaimKind } from "./claimKind";
 
 /**
  * Standardized claim types for evidence and attribution evaluation.
@@ -239,9 +240,11 @@ export function decomposeStatementClaims(
         claimType: "factual",
         layer: "underlying_fact",
         certainty: inferClaimCertainty(part),
+        claimKind: classifyClaimKind(part),
       }));
     }
 
+    const kind = classifyClaimKind(trimmed);
     return [
       {
         id: `${baseIdPrefix}-1`,
@@ -250,6 +253,7 @@ export function decomposeStatementClaims(
         claimType: "factual",
         layer: "underlying_fact",
         certainty: inferClaimCertainty(trimmed),
+        claimKind: kind,
       },
     ];
   }
@@ -265,10 +269,12 @@ export function decomposeStatementClaims(
     claimType: "statement_attribution",
     layer: "statement_made",
     certainty: "reported_claim",
+    claimKind: "news_event",
   });
 
   // 2. Factual Proposition (Medium Importance)
   // Evaluates the factual content of the quote independently of who said it.
+  const quoteKind = classifyClaimKind(intent.quote);
   claims.push({
     id: `${baseIdPrefix}-2`,
     text: `Factual proposition in statement: "${intent.quote}"`,
@@ -276,6 +282,7 @@ export function decomposeStatementClaims(
     claimType: "factual_proposition",
     layer: "underlying_fact",
     certainty: inferClaimCertainty(intent.quote),
+    claimKind: quoteKind,
   });
 
   // 3. Interpretation / Quotation Accuracy (Low Importance)
@@ -287,6 +294,7 @@ export function decomposeStatementClaims(
     claimType: intent.isExactQuote ? "quotation_accuracy" : "interpretation",
     layer: intent.isExactQuote ? "quote_wording" : "interpretation",
     certainty: intent.isExactQuote ? "asserted_fact" : "opinion_analysis",
+    claimKind: "opinion",
   });
 
   return claims;

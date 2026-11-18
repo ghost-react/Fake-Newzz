@@ -35,6 +35,7 @@ export interface DetermineConclusionInput {
   sourceReadStatus?: string;
   sourceReadNote?: string;
   independentClustersCount?: number;
+  hasGatedEvidence?: boolean;
 }
 
 /**
@@ -99,7 +100,10 @@ export function determineConclusion(input: DetermineConclusionInput): Conclusion
     };
   }
 
-  if (veracityVerdict === "unverified" && effectiveIndepCount === 0) {
+  if (
+    (veracityVerdict === "unverified" && effectiveIndepCount === 0) ||
+    input.hasGatedEvidence === false
+  ) {
     reasonCodes.push("NO_INDEPENDENT_REPORTS");
     return {
       label: "Can't verify",
@@ -120,7 +124,7 @@ export function determineConclusion(input: DetermineConclusionInput): Conclusion
     );
 
   // 2. Check for contradicted central claim -> "False"
-  // Constraint: A high-importance claim contradicted by reliable independent evidence.
+  // Constraint: A high-importance or established fact claim contradicted by reliable independent evidence.
   // Rule 4.b: A rumour story with credible reports gives Unconfirmed, not False.
   const highImportanceContradicted = claims.some((c) => {
     if (c.importance !== "high") return false;
@@ -128,7 +132,22 @@ export function determineConclusion(input: DetermineConclusionInput): Conclusion
     return ev?.verdict === "contradicting";
   });
 
-  if (highImportanceContradicted && !isRumourStory) {
+  const establishedFactContradicted = claims.some((c) => {
+    const ev = evalMap.get(c.id);
+    return (
+      ev?.verdict === "contradicting" &&
+      ((c as any).claimKind === "established_fact" || c.importance === "high")
+    );
+  });
+
+  const twoGatedSourcesContradicted = evaluations.some(
+    (e) => e.verdict === "contradicting" && e.evidenceIds.length >= 2
+  );
+
+  if (
+    (highImportanceContradicted || establishedFactContradicted || twoGatedSourcesContradicted) &&
+    (!isRumourStory || establishedFactContradicted || twoGatedSourcesContradicted)
+  ) {
     reasonCodes.push("HIGH_IMPORTANCE_CLAIM_CONTRADICTED");
     return {
       label: "False",

@@ -7,6 +7,8 @@ export interface EventMatchOptions {
   eventDate?: string | null;
   eventDateWindowDays?: number;
   isRetrospective?: boolean;
+  claimKind?: string;
+  isEstablishedFact?: boolean;
   keyEntities?: string[];
   actionKeywords?: string[];
 }
@@ -129,9 +131,19 @@ export function classifyEvidenceEventMatch(
   const fullEvidenceText = `${evidence.title} ${evidence.snippet} ${evidence.sourceContentExcerpt || ""}`.toLowerCase();
   const articleFullText = `${articleContext.title || ""} ${articleContext.contentExcerpt || ""}`.toLowerCase();
 
+  const isEstablishedFact =
+    options?.isEstablishedFact ||
+    options?.claimKind === "established_fact";
+
   const isRetrospective =
-    options?.isRetrospective ??
+    isEstablishedFact ||
+    options?.isRetrospective ||
     (isArticleRetrospective(articleFullText) || isArticleRetrospective(evidence.title));
+
+  // For established facts (science, history, geography, definitions), skip the recency/window and background exclusions
+  if (isEstablishedFact) {
+    return "same_event";
+  }
 
   // 1. Explicit background signals in evidence text
   if (

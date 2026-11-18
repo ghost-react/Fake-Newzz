@@ -208,6 +208,7 @@ export const VerificationReportSchema = z
     coreEventGatePassed: z.boolean().optional(),
     headlineSource: z.enum(["metadata", "url_search", "url_slug"]).nullable().optional(),
     conclusion: ConclusionSchema.optional(),
+    hasGatedEvidence: z.boolean().optional(),
   })
   .strict();
 

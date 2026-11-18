@@ -34,7 +34,8 @@ export type EvaluationValidationResult = ValidationSuccess | ValidationFailure;
 export function validateClaimEvaluation(
   rawEvaluation: unknown,
   expectedClaimId: string,
-  validEvidenceIdsForClaim: Iterable<string>
+  validEvidenceIdsForClaim: Iterable<string>,
+  preparedEvidence?: Array<{ evidenceId: string; snippet: string; title: string; sourceContentExcerpt?: string | null }>
 ): EvaluationValidationResult {
   // 1. Structural Zod Validation
   const zodResult = ClaimEvaluationSchema.safeParse(rawEvaluation);
@@ -109,14 +110,41 @@ export function validateClaimEvaluation(
     new Set((evalData.importantNotes || []).map((n) => n.trim()).filter(Boolean))
   );
 
+  let finalVerdict = evalData.verdict;
+  let finalPassage = evalData.citedPassage?.trim();
+
+  // 6. Cited passage validation (under 15 words and appears in cited evidence text)
+  if (finalPassage) {
+    const wordCount = finalPassage.split(/\s+/).filter(Boolean).length;
+    if (wordCount > 15) {
+      finalPassage = finalPassage.split(/\s+/).slice(0, 14).join(" ");
+    }
+
+    if (preparedEvidence && (finalVerdict === "supporting" || finalVerdict === "contradicting")) {
+      const lowerPassage = finalPassage.toLowerCase();
+      const appearsInEvidence = deduplicatedIds.some((id) => {
+        const ev = preparedEvidence.find((e) => e.evidenceId === id);
+        if (!ev) return false;
+        const text = `${ev.title} ${ev.snippet} ${ev.sourceContentExcerpt || ""}`.toLowerCase();
+        return text.includes(lowerPassage);
+      });
+
+      if (!appearsInEvidence) {
+        finalVerdict = "insufficient";
+        finalPassage = undefined;
+      }
+    }
+  }
+
   return {
     isValid: true,
     evaluation: {
       claimId: expectedClaimId,
-      verdict: evalData.verdict,
+      verdict: finalVerdict,
       confidence: evalData.confidence,
       explanation: evalData.explanation.trim(),
       evidenceIds: deduplicatedIds,
+      citedPassage: finalPassage,
       importantNotes: deduplicatedNotes,
     },
   };

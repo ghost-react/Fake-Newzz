@@ -689,11 +689,18 @@ export async function compareClaimsAcrossClusters(
 
   // Filter out failed, blocked, timeout, or empty evidence items
   const usableEvidence = evidence.filter(isUsableEvidence);
-  // Tag usable evidence with event matching (14-day window default)
-  const taggedEvidence = tagEvidenceWithEventMatch(usableEvidence, {
-    title: options?.articleText ? options.articleText.slice(0, 100) : undefined,
-    contentExcerpt: options?.articleText ? options.articleText.slice(0, 500) : undefined,
-  });
+  const hasEstablishedFact = claims.some((c) => c.claimKind === "established_fact");
+  // Tag usable evidence with event matching (14-day window default, skipped for established facts)
+  const taggedEvidence = tagEvidenceWithEventMatch(
+    usableEvidence,
+    {
+      title: options?.articleText ? options.articleText.slice(0, 100) : undefined,
+      contentExcerpt: options?.articleText ? options.articleText.slice(0, 500) : undefined,
+    },
+    {
+      isEstablishedFact: hasEstablishedFact,
+    }
+  );
   const evidenceMap = new Map(taggedEvidence.map((e) => [e.id, e]));
 
   // Ensure each usable evidence has a cluster mapping

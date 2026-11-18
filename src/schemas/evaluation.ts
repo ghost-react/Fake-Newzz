@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ClaimInputSchema, EvidenceSchema, ClaimCertaintySchema, ClaimCertainty } from "./evidence";
+import { ClaimInputSchema, EvidenceSchema, ClaimCertaintySchema, ClaimCertainty, ClaimKindSchema, ClaimKind } from "./evidence";
 import { ClaimLayerSchema, ClaimLayer } from "./claim";
 
 export * from "./claim";
@@ -38,9 +38,11 @@ export const ClaimEvaluationSchema = z
     confidence: ConfidenceSchema,
     explanation: z.string().trim().min(1, { message: "Explanation cannot be empty" }),
     evidenceIds: z.array(z.string().trim().min(1)),
+    citedPassage: z.string().trim().optional(),
     importantNotes: z.array(z.string().trim()).default([]),
     layer: ClaimLayerSchema.default("underlying_fact").optional(),
     certainty: ClaimCertaintySchema.default("asserted_fact").optional(),
+    claimKind: ClaimKindSchema.default("news_event").optional(),
   })
   .strict();
 

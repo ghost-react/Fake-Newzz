@@ -235,7 +235,9 @@ describe("Unreadable Article Fallback Verification Suite (Prompt 10)", () => {
     assert.strictEqual(data.veracityVerdict, "could_not_read");
     assert.strictEqual(data.sourceReadStatus, "could_not_read");
     assert.ok(
-      data.summary.includes("paste the headline") || data.sourceReadNote.includes("paste the headline"),
+      data.summary.includes("Try another link to the same story") ||
+      data.summary.includes("paste the headline") ||
+      data.sourceReadNote?.includes("paste the headline"),
       `Summary was: ${data.summary}`
     );
   });
@@ -266,8 +268,10 @@ describe("Unreadable Article Fallback Verification Suite (Prompt 10)", () => {
       assert.strictEqual(data.sourceReadStatus, "could_not_read");
       assert.notStrictEqual(data.veracityVerdict, "unverified");
       assert.ok(
-        data.summary.includes("paste the headline") || data.sourceReadNote.includes("paste the headline"),
-        `Expected paste suggestion in response, got: ${data.summary}`
+        data.summary.includes("Try another link to the same story") ||
+        data.summary.includes("paste the headline") ||
+        data.sourceReadNote?.includes("paste the headline"),
+        `Expected unreadable suggestion in response, got: ${data.summary}`
       );
     } finally {
       if (origSerperKey) process.env.SERPER_API_KEY = origSerperKey;
