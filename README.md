@@ -37,10 +37,13 @@ FakeNewzz follows a rigorous, multi-stage verification pipeline:
 ```
 
 ### Key Principles
-- **Zero-Hallucination Scoring**: The language model never determines or outputs the numeric score or verdict. Scores are computed using pure mathematical formulas from verified evidence citations and cluster counts.
-- **Strict Entailment**: Sources are evaluated for whether they actually state the claim, contradict it, or merely mention the general topic. Mere topic overlap does not count as supporting evidence.
+- **URL-Only Verification**: Focuses on specific article URLs to ground analysis in complete reporting context. Bare homepages and search queries are blocked, while embedded URLs in conversational queries are extracted automatically.
+- **Relevance Gate Before Evidence Counts**: Search results are only admitted as evidence if cited passages contain the claim's core specifics (subject, action/predicate, and numbers/dates). Topic-only mentions and index/tag pages are rejected.
+- **Claim Kind Classification**: Differentiates `established_fact` (science, history, geography) from `news_event`. Established facts search reference and fact-checking authorities without recency penalties.
+- **Zero-Hallucination Scoring**: The language model never outputs numeric scores or final verdicts. Scores are computed using pure deterministic mathematical formulas from verified evidence citations and cluster counts.
+- **Strict Entailment**: Sources are evaluated for whether they actually corroborate the claim, contradict it, or merely discuss it. A debunking or questioning mention never counts as supporting evidence.
 - **Syndication Independence**: 10 syndicated copies of the same wire service count as one independent voice, preventing echo chambers from inflating trust.
-- **The 100-Gate**: A score of 100 is impossible without multiple independent source clusters, zero unresolved conflicts, and verification of all core factual dimensions.
+- **The 100-Gate**: A score of 100 is mathematically impossible without multiple independent source clusters, zero unresolved conflicts, and verification of all core factual dimensions.
 
 ---
 
@@ -52,23 +55,27 @@ FakeNewzz follows a rigorous, multi-stage verification pipeline:
 
 ### 1. Clone & Install Dependencies
 ```bash
-git clone https://github.com/your-username/fakenewzz.git
-cd fakenewzz
+git clone https://github.com/ghost-react/Fake-Newzz.git
+cd Fake-Newzz
 npm install
 ```
 
-### 2. Environment Configuration
+### 2. Environment Configuration & Feature Flags
 Copy `.env.example` to `.env.local` and configure your API keys:
 ```bash
 cp .env.example .env.local
 ```
 
-Required & optional variables:
+#### Core API Keys:
 - `FIRECRAWL_API_KEY`: For web scraping and article text extraction ([Firecrawl](https://firecrawl.dev)).
 - `SERPER_API_KEY`: For real-time Google News & Web evidence search ([Serper](https://serper.dev)).
 - `GOOGLE_GENERATIVE_AI_API_KEY`: Primary LLM for structured claim evaluation ([Google AI Studio](https://aistudio.google.com)).
 - `ANTHROPIC_API_KEY`: Fallback LLM provider ([Anthropic](https://console.anthropic.com)).
 - `UPSTASH_REDIS_REST_URL` & `UPSTASH_REDIS_REST_TOKEN`: For distributed per-IP rate limiting and daily budget protection ([Upstash](https://upstash.com)).
+
+#### Feature Flags:
+- `TEXT_INPUT_ENABLED=false`: (Default `false`) Controls whether non-URL text and headline inputs are accepted. In URL-only mode, only specific news article links are verified, preventing vague or ungrounded claims while preserving the text pipeline in code.
+- `UNREADABLE_FALLBACK_ENABLED=false`: (Default `false`) Controls whether paywalled or 403-blocked articles fall back to headline-based search. When disabled, blocked articles immediately show an informative publisher-block message without speculative evaluation.
 
 ### 3. Run the Development Server
 ```bash
@@ -78,7 +85,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 4. Running Tests & Benchmarks
 ```bash
-# Run the complete test suite (250+ unit and integration tests)
+# Run the complete test suite (284 unit, integration, and regression tests)
 npm test
 
 # Run the verification benchmark suite
